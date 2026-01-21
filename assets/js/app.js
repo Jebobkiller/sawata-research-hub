@@ -1419,6 +1419,193 @@ function closeModal() {
 // SEARCH & FILTER
 // =====================================================
 
+// Get all unique categories from research papers
+function getAvailableCategories() {
+    const categories = new Set();
+    researchPapers.forEach(paper => {
+        if (paper.category && paper.category.trim() !== '') {
+            categories.add(paper.category);
+        }
+    });
+    return Array.from(categories).sort();
+}
+
+// Get all unique strands from research papers
+function getAvailableStrands() {
+    const strands = new Set();
+    researchPapers.forEach(paper => {
+        if (paper.strand && paper.strand.trim() !== '') {
+            strands.add(paper.strand);
+        }
+    });
+    return Array.from(strands).sort();
+}
+
+// Get all unique years from research papers
+function getAvailableYears() {
+    const years = new Set();
+    researchPapers.forEach(paper => {
+        if (paper.year && paper.year.trim() !== '') {
+            years.add(paper.year);
+        }
+    });
+    return Array.from(years).sort().reverse();
+}
+
+// Dynamically render filter options based on available data
+function renderFilterOptions() {
+    const categoryFilterGroup = document.querySelector('.filter-group:nth-of-type(1)');
+    const strandFilterGroup = document.querySelector('.filter-group:nth-of-type(2)');
+    const yearFilter = document.getElementById('year-filter');
+    
+    if (!categoryFilterGroup || !strandFilterGroup || !yearFilter) return;
+    
+    // Get available categories, strands, and years from papers
+    const availableCategories = getAvailableCategories();
+    const availableStrands = getAvailableStrands();
+    const availableYears = getAvailableYears();
+    
+    // Store original category labels
+    const categoryLabels = {
+        'SIP': 'Science Investigatory Project',
+        'Capstone': 'Capstone Project',
+        'Action Research': 'Action Research',
+        'Thesis': 'Thesis'
+    };
+    
+    // Rebuild category filter (keep "All Categories" first)
+    let categoryHTML = `
+        <label class="filter-checkbox">
+            <input type="radio" name="category" value="all" checked>
+            <span class="checkmark"></span>
+            All Categories
+        </label>
+    `;
+    
+    availableCategories.forEach(cat => {
+        const label = categoryLabels[cat] || cat;
+        categoryHTML += `
+            <label class="filter-checkbox">
+                <input type="radio" name="category" value="${cat}">
+                <span class="checkmark"></span>
+                ${label}
+            </label>
+        `;
+    });
+    
+    // Replace category filter HTML (keep the heading)
+    const categoryHeading = categoryFilterGroup.querySelector('.filter-heading');
+    categoryFilterGroup.innerHTML = `<h4 class="filter-heading">Category</h4>` + categoryHTML;
+    
+    // Rebuild strand filter (keep "All Strands" first)
+    let strandHTML = `
+        <label class="filter-checkbox">
+            <input type="radio" name="strand" value="all" checked>
+            <span class="checkmark"></span>
+            All Strands
+        </label>
+    `;
+    
+    availableStrands.forEach(strand => {
+        strandHTML += `
+            <label class="filter-checkbox">
+                <input type="radio" name="strand" value="${strand}">
+                <span class="checkmark"></span>
+                ${strand}
+            </label>
+        `;
+    });
+    
+    // Replace strand filter HTML (keep the heading)
+    const strandHeading = strandFilterGroup.querySelector('.filter-heading');
+    strandFilterGroup.innerHTML = `<h4 class="filter-heading">Academic Strand</h4>` + strandHTML;
+    
+    // Rebuild year filter
+    let yearHTML = '<option value="">All Years</option>';
+    availableYears.forEach(year => {
+        yearHTML += `<option value="${year}">${year}</option>`;
+    });
+    yearFilter.innerHTML = yearHTML;
+    
+    // Re-attach event listeners to new filter inputs
+    attachFilterEventListeners();
+}
+
+// Attach event listeners to filter inputs
+function attachFilterEventListeners() {
+    // Category radio buttons
+    document.querySelectorAll('input[name="category"]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked && checkbox.value !== 'all') {
+                // Uncheck "All Categories" when a specific category is selected
+                const allCategoryCheckbox = document.querySelector('input[name="category"][value="all"]');
+                if (allCategoryCheckbox) allCategoryCheckbox.checked = false;
+            }
+            applyFilters();
+        });
+    });
+    
+    // Strand radio buttons
+    document.querySelectorAll('input[name="strand"]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked && checkbox.value !== 'all') {
+                // Uncheck "All Strands" when a specific strand is selected
+                const allStrandCheckbox = document.querySelector('input[name="strand"][value="all"]');
+                if (allStrandCheckbox) allStrandCheckbox.checked = false;
+            }
+            applyFilters();
+        });
+    });
+    
+    // Year dropdown
+    const yearFilter = document.getElementById('year-filter');
+    if (yearFilter) {
+        yearFilter.addEventListener('change', () => {
+            applyFilters();
+        });
+    }
+}
+
+// Main apply filters function
+function applyFilters() {
+    // Get selected category
+    const selectedCategoryInput = document.querySelector('input[name="category"]:checked');
+    const selectedCategory = selectedCategoryInput ? selectedCategoryInput.value : 'all';
+    
+    // Get selected strand
+    const selectedStrandInput = document.querySelector('input[name="strand"]:checked');
+    const selectedStrand = selectedStrandInput ? selectedStrandInput.value : 'all';
+    
+    // Get selected year
+    const yearFilter = document.getElementById('year-filter');
+    const selectedYear = yearFilter ? yearFilter.value : '';
+    
+    // Apply filters
+    filteredPapers = researchPapers.filter(paper => {
+        // Category filter - if "all" is selected, show all categories
+        const categoryMatch = selectedCategory === 'all' || paper.category === selectedCategory;
+        
+        // Strand filter - if "all" is selected, show all strands
+        const strandMatch = selectedStrand === 'all' || paper.strand === selectedStrand;
+        
+        // Year filter - if empty, show all years
+        const yearMatch = !selectedYear || paper.year === selectedYear;
+        
+        return categoryMatch && strandMatch && yearMatch;
+    });
+    
+    currentPage = 1;
+    renderPapersGrid();
+    
+    // Show notification if filters are applied and results are empty
+    if (filteredPapers.length === 0) {
+        const hasActiveFilters = selectedCategory !== 'all' || selectedStrand !== 'all' || selectedYear;
+        if (hasActiveFilters) {
+            showNotification('No Results', 'No research papers match your selected filters', 'info');
+        }
+    }
+}
+
 function performSearch() {
     const searchTerm = document.getElementById('hero-search').value.toLowerCase().trim();
     
@@ -1447,35 +1634,65 @@ function performSearch() {
 }
 
 function filterByCategory(category) {
-    if (category === 'all') {
-        filteredPapers = [];
-    } else {
-        filteredPapers = researchPapers.filter(paper => paper.category === category);
+    // This function is kept for backward compatibility with quick filters
+    // Select the appropriate radio button
+    const categoryRadio = document.querySelector(`input[name="category"][value="${category}"]`);
+    if (categoryRadio) {
+        categoryRadio.checked = true;
+        
+        // Uncheck "All Categories" when a specific category is selected
+        if (category !== 'all') {
+            const allCategoryRadio = document.querySelector('input[name="category"][value="all"]');
+            if (allCategoryRadio) allCategoryRadio.checked = false;
+        }
     }
-    currentPage = 1;
-    renderPapersGrid();
+    
+    applyFilters();
 }
 
 function filterByStrand(strand) {
-    filteredPapers = strand ? researchPapers.filter(paper => paper.strand === strand) : [];
-    currentPage = 1;
-    renderPapersGrid();
+    // This function is kept for backward compatibility
+    // Select the appropriate radio button
+    const strandRadio = document.querySelector(`input[name="strand"][value="${strand}"]`);
+    if (strandRadio) {
+        strandRadio.checked = true;
+        
+        // Uncheck "All Strands" when a specific strand is selected
+        if (strand !== 'all') {
+            const allStrandRadio = document.querySelector('input[name="strand"][value="all"]');
+            if (allStrandRadio) allStrandRadio.checked = false;
+        }
+    }
+    
+    applyFilters();
 }
 
 function filterByYear(year) {
-    filteredPapers = year ? researchPapers.filter(paper => paper.year === year) : [];
-    currentPage = 1;
-    renderPapersGrid();
+    // This function is kept for backward compatibility
+    const yearFilter = document.getElementById('year-filter');
+    if (yearFilter) {
+        yearFilter.value = year || '';
+    }
+    applyFilters();
 }
 
 function resetFilters() {
     filteredPapers = [];
     currentPage = 1;
+    
+    // Reset all radio buttons to "all"
+    const allCategoryRadio = document.querySelector('input[name="category"][value="all"]');
+    const allStrandRadio = document.querySelector('input[name="strand"][value="all"]');
+    
+    if (allCategoryRadio) allCategoryRadio.checked = true;
+    if (allStrandRadio) allStrandRadio.checked = true;
+    
+    // Reset year dropdown
+    const yearFilter = document.getElementById('year-filter');
+    if (yearFilter) yearFilter.value = '';
+    
     renderPapersGrid();
-    document.querySelectorAll('input[name="category"]').forEach(cb => {
-        if (cb.value === 'all') cb.checked = true;
-        else cb.checked = false;
-    });
+    showNotification('Filters Reset', 'All filters have been cleared', 'info');
 }
 
 // =====================================================
@@ -2744,10 +2961,7 @@ function setupEventListeners() {
         mobileMenuBtn.addEventListener('click', () => navList.classList.toggle('active'));
     }
     
-    document.querySelectorAll('input[name="category"]').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            const checked = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(c => c.value);
-            filterByCategory(checked.includes('all') || checked.length === 0 ? 'all' : checked[0]);
-        });
-    });
+    // Render filter options dynamically based on available data
+    renderFilterOptions();
+}
 }
