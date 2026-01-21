@@ -1419,27 +1419,110 @@ function closeModal() {
 // SEARCH & FILTER
 // =====================================================
 
-// Get all unique categories from research papers
-function getAvailableCategories() {
-    const categories = new Set();
-    researchPapers.forEach(paper => {
-        if (paper.category && paper.category.trim() !== '') {
-            categories.add(paper.category);
-        }
-    });
-    return Array.from(categories).sort();
-}
+// Complete list of all research categories
+const ALL_CATEGORIES = [
+    'Agriculture',
+    'Anthropology',
+    'Archaeology',
+    'Architecture',
+    'Art',
+    'Astronomy',
+    'Astrophysics',
+    'Atmospheric Science',
+    'Biochemistry',
+    'Bioengineering',
+    'Bioinformatics',
+    'Biology',
+    'Biophysics',
+    'Biotechnology',
+    'Botany',
+    'Business',
+    'Chemical Engineering',
+    'Chemistry',
+    'Civil Engineering',
+    'Climate Science',
+    'Cognitive Science',
+    'Communication Studies',
+    'Computer Science',
+    'Criminology',
+    'Cultural Studies',
+    'Data Science',
+    'Demography',
+    'Design',
+    'Development Studies',
+    'Earth Science',
+    'Ecology',
+    'Economics',
+    'Education',
+    'Electrical Engineering',
+    'Energy Studies',
+    'Engineering',
+    'Environmental Science',
+    'Ethics',
+    'Finance',
+    'Food Science',
+    'Forestry',
+    'Gender Studies',
+    'Geography',
+    'Geology',
+    'Health Sciences',
+    'History',
+    'Human-Computer Interaction',
+    'Immunology',
+    'Industrial Engineering',
+    'Information Science',
+    'International Relations',
+    'Journalism',
+    'Law',
+    'Linguistics',
+    'Management',
+    'Marine Science',
+    'Materials Science',
+    'Mathematics',
+    'Mechanical Engineering',
+    'Media Studies',
+    'Medicine',
+    'Microbiology',
+    'Nanotechnology',
+    'Neuroscience',
+    'Nursing',
+    'Nutrition',
+    'Oceanography',
+    'Philosophy',
+    'Physics',
+    'Political Science',
+    'Psychology',
+    'Public Administration',
+    'Public Health',
+    'Religious Studies',
+    'Robotics',
+    'Sociology',
+    'Software Engineering',
+    'Space Science',
+    'Statistics',
+    'Supply Chain Management',
+    'Sustainability Studies',
+    'Systems Engineering',
+    'Telecommunications',
+    'Theology',
+    'Toxicology',
+    'Transportation Studies',
+    'Urban Studies',
+    'Veterinary Science',
+    'Zoology'
+];
 
-// Get all unique strands from research papers
-function getAvailableStrands() {
-    const strands = new Set();
-    researchPapers.forEach(paper => {
-        if (paper.strand && paper.strand.trim() !== '') {
-            strands.add(paper.strand);
-        }
-    });
-    return Array.from(strands).sort();
-}
+// Complete list of all strands
+const ALL_STRANDS = [
+    'STEM',
+    'ABM',
+    'HUMSS',
+    'TVL',
+    'GAS',
+    'Sports Track',
+    'Arts and Design Track',
+    'Academic Track'
+];
 
 // Get all unique years from research papers
 function getAvailableYears() {
@@ -1452,7 +1535,7 @@ function getAvailableYears() {
     return Array.from(years).sort().reverse();
 }
 
-// Dynamically render filter options based on available data
+// Dynamically render filter options based on ALL available categories (not just existing papers)
 function renderFilterOptions() {
     const categoryFilterGroup = document.querySelector('.filter-group:nth-of-type(1)');
     const strandFilterGroup = document.querySelector('.filter-group:nth-of-type(2)');
@@ -1460,20 +1543,10 @@ function renderFilterOptions() {
     
     if (!categoryFilterGroup || !strandFilterGroup || !yearFilter) return;
     
-    // Get available categories, strands, and years from papers
-    const availableCategories = getAvailableCategories();
-    const availableStrands = getAvailableStrands();
+    // Get available years from papers (dynamic)
     const availableYears = getAvailableYears();
     
-    // Store original category labels
-    const categoryLabels = {
-        'SIP': 'Science Investigatory Project',
-        'Capstone': 'Capstone Project',
-        'Action Research': 'Action Research',
-        'Thesis': 'Thesis'
-    };
-    
-    // Rebuild category filter (keep "All Categories" first)
+    // Rebuild category filter with ALL categories (keep "All Categories" first)
     let categoryHTML = `
         <label class="filter-checkbox">
             <input type="radio" name="category" value="all" checked>
@@ -1482,13 +1555,12 @@ function renderFilterOptions() {
         </label>
     `;
     
-    availableCategories.forEach(cat => {
-        const label = categoryLabels[cat] || cat;
+    ALL_CATEGORIES.forEach(cat => {
         categoryHTML += `
             <label class="filter-checkbox">
                 <input type="radio" name="category" value="${cat}">
                 <span class="checkmark"></span>
-                ${label}
+                ${cat}
             </label>
         `;
     });
@@ -1497,7 +1569,7 @@ function renderFilterOptions() {
     const categoryHeading = categoryFilterGroup.querySelector('.filter-heading');
     categoryFilterGroup.innerHTML = `<h4 class="filter-heading">Category</h4>` + categoryHTML;
     
-    // Rebuild strand filter (keep "All Strands" first)
+    // Rebuild strand filter with ALL strands (keep "All Strands" first)
     let strandHTML = `
         <label class="filter-checkbox">
             <input type="radio" name="strand" value="all" checked>
@@ -1506,7 +1578,7 @@ function renderFilterOptions() {
         </label>
     `;
     
-    availableStrands.forEach(strand => {
+    ALL_STRANDS.forEach(strand => {
         strandHTML += `
             <label class="filter-checkbox">
                 <input type="radio" name="strand" value="${strand}">
@@ -1520,7 +1592,7 @@ function renderFilterOptions() {
     const strandHeading = strandFilterGroup.querySelector('.filter-heading');
     strandFilterGroup.innerHTML = `<h4 class="filter-heading">Academic Strand</h4>` + strandHTML;
     
-    // Rebuild year filter
+    // Rebuild year filter with years from papers
     let yearHTML = '<option value="">All Years</option>';
     availableYears.forEach(year => {
         yearHTML += `<option value="${year}">${year}</option>`;
