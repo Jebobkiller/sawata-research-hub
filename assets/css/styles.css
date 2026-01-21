@@ -575,9 +575,24 @@ input, select, textarea {
     font-size: 13px;
     color: var(--text-dark);
     transition: all var(--transition-fast);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
 }
 
 .filter-tag:hover {
+    background: var(--primary-blue);
+    color: var(--white);
+    border-color: var(--primary-blue);
+}
+
+/* Hide the actual radio input but keep it accessible */
+.filter-tag input[type="radio"] {
+    display: none;
+}
+
+/* Style the label when radio is checked */
+.filter-tag:has(input[type="radio"]:checked) {
     background: var(--primary-blue);
     color: var(--white);
     border-color: var(--primary-blue);
@@ -699,7 +714,8 @@ input, select, textarea {
     color: var(--primary-blue);
 }
 
-.filter-checkbox input[type="checkbox"] {
+.filter-checkbox input[type="checkbox"],
+.filter-checkbox input[type="radio"] {
     width: 16px;
     height: 16px;
     accent-color: var(--primary-blue);
@@ -3792,3 +3808,4 @@ input, select, textarea {
         width: calc(100vw - 32px);
     }
 }
+
