@@ -3,10 +3,9 @@
   "version": "1.0.0",
   "description": "Sawata Research Hub - Institutional Repository",
   "scripts": {
-    "build": "mkdir -p dist && cp -r index.html assets test.js dist/",
+    "build": "mkdir -p dist && cp -r index.html assets dist/",
     "dev": "npm run build && echo 'Static site ready in dist/'",
-    "test": "node test.js",
-    "vercel-deploy": "vercel --prod"
+    "test": "echo 'No tests configured'"
   },
   "keywords": [],
   "author": "",
@@ -14,9 +13,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1"
   },
-  "devDependencies": {
-    "vercel": "^33.0.0"
-  },
+  "devDependencies": {},
   "engines": {
     "node": ">=18.0.0"
   }
