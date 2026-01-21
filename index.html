@@ -99,10 +99,22 @@
                     
                     <div class="quick-filters">
                         <span class="filter-label">Quick filters:</span>
-                        <button class="filter-tag" data-category="all">All</button>
-                        <button class="filter-tag" data-category="SIP">Science Investigatory</button>
-                        <button class="filter-tag" data-category="Capstone">Capstone</button>
-                        <button class="filter-tag" data-category="Action Research">Action Research</button>
+                        <label class="filter-tag">
+                            <input type="radio" name="quick-category" value="all" checked onchange="filterByCategory(this.value)">
+                            All
+                        </label>
+                        <label class="filter-tag">
+                            <input type="radio" name="quick-category" value="SIP" onchange="filterByCategory(this.value)">
+                            Science Investigatory
+                        </label>
+                        <label class="filter-tag">
+                            <input type="radio" name="quick-category" value="Capstone" onchange="filterByCategory(this.value)">
+                            Capstone
+                        </label>
+                        <label class="filter-tag">
+                            <input type="radio" name="quick-category" value="Action Research" onchange="filterByCategory(this.value)">
+                            Action Research
+                        </label>
                     </div>
                 </div>
                 
@@ -145,63 +157,18 @@
                         <div class="filter-group">
                             <h4 class="filter-heading">Category</h4>
                             <label class="filter-checkbox">
-                                <input type="checkbox" name="category" value="all" checked>
+                                <input type="radio" name="category" value="all" checked>
                                 <span class="checkmark"></span>
                                 All Categories
-                            </label>
-                            <label class="filter-checkbox">
-                                <input type="checkbox" name="category" value="SIP">
-                                <span class="checkmark"></span>
-                                Science Investigatory Project
-                            </label>
-                            <label class="filter-checkbox">
-                                <input type="checkbox" name="category" value="Capstone">
-                                <span class="checkmark"></span>
-                                Capstone Project
-                            </label>
-                            <label class="filter-checkbox">
-                                <input type="checkbox" name="category" value="Action Research">
-                                <span class="checkmark"></span>
-                                Action Research
-                            </label>
-                            <label class="filter-checkbox">
-                                <input type="checkbox" name="category" value="Thesis">
-                                <span class="checkmark"></span>
-                                Thesis
                             </label>
                         </div>
                         
                         <div class="filter-group">
                             <h4 class="filter-heading">Academic Strand</h4>
                             <label class="filter-checkbox">
-                                <input type="checkbox" name="strand" value="all" checked>
+                                <input type="radio" name="strand" value="all" checked>
                                 <span class="checkmark"></span>
                                 All Strands
-                            </label>
-                            <label class="filter-checkbox">
-                                <input type="checkbox" name="strand" value="STEM">
-                                <span class="checkmark"></span>
-                                STEM
-                            </label>
-                            <label class="filter-checkbox">
-                                <input type="checkbox" name="strand" value="ABM">
-                                <span class="checkmark"></span>
-                                ABM
-                            </label>
-                            <label class="filter-checkbox">
-                                <input type="checkbox" name="strand" value="HUMSS">
-                                <span class="checkmark"></span>
-                                HUMSS
-                            </label>
-                            <label class="filter-checkbox">
-                                <input type="checkbox" name="strand" value="TVL">
-                                <span class="checkmark"></span>
-                                TVL
-                            </label>
-                            <label class="filter-checkbox">
-                                <input type="checkbox" name="strand" value="GAS">
-                                <span class="checkmark"></span>
-                                GAS
                             </label>
                         </div>
                         
