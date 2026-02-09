@@ -100,12 +100,39 @@ function initializeApp() {
     if (supabaseConfigured && supabaseClient) {
         // Initialize with Supabase
         document.getElementById('supabase-loading').style.display = 'flex';
-        loadPapersFromSupabase();
+        
+        // Add a timeout - if Supabase doesn't respond in 10 seconds, fallback to local mode
+        const supabaseTimeout = setTimeout(() => {
+            console.warn('Supabase loading timed out, falling back to local mode');
+            hideSupabaseLoading();
+            initializeWithLocalData();
+            showNotification('Cloud Loading Timeout', 'Using local data instead. Check your internet connection.', 'warning');
+        }, 10000); // 10 second timeout
+        
+        // Load papers from Supabase
+        loadPapersFromSupabase().then(() => {
+            clearTimeout(supabaseTimeout);
+            hideSupabaseLoading();
+        }).catch((error) => {
+            clearTimeout(supabaseTimeout);
+            console.error('Supabase loading failed:', error);
+            hideSupabaseLoading();
+            initializeWithLocalData();
+            showNotification('Cloud Loading Failed', 'Using local data. Please check your connection.', 'error');
+        });
     } else {
         // Initialize with local data
         document.getElementById('supabase-loading').style.display = 'none';
         initializeWithLocalData();
         showSupabaseSetupGuide();
+    }
+}
+
+// Helper function to safely hide the loading overlay
+function hideSupabaseLoading() {
+    const loadingEl = document.getElementById('supabase-loading');
+    if (loadingEl) {
+        loadingEl.style.display = 'none';
     }
 }
 
@@ -418,14 +445,21 @@ async function loadPapersFromSupabase() {
     }
     
     try {
-        // List files from the storage bucket
-        const { data: files, error: listError } = await supabaseClient
+        // List files from the storage bucket with timeout
+        const filesPromise = supabaseClient
             .storage
             .from(supabaseConfig.bucketName)
             .list('', {
                 limit: 200,
                 sortBy: { column: 'created_at', order: 'desc' }
             });
+        
+        // Add timeout of 8 seconds for the request
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Request timeout')), 8000)
+        );
+        
+        const { data: files, error: listError } = await Promise.race([filesPromise, timeoutPromise]);
         
         if (listError) {
             console.error('Error listing files from Supabase:', listError);
@@ -460,11 +494,17 @@ async function loadPapersFromSupabase() {
                 
                 if (jsonFiles[baseName]) {
                     try {
-                        // Download and parse the JSON metadata file
-                        const { data: jsonData, error: jsonError } = await supabaseClient
+                        // Download and parse the JSON metadata file with timeout
+                        const jsonPromise = supabaseClient
                             .storage
                             .from(supabaseConfig.bucketName)
                             .download(baseName + '.json');
+                        
+                        const jsonTimeoutPromise = new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('JSON download timeout')), 5000)
+                        );
+                        
+                        const { data: jsonData, error: jsonError } = await Promise.race([jsonPromise, jsonTimeoutPromise]);
                         
                         if (!jsonError && jsonData) {
                             const jsonText = await jsonData.text();
@@ -3037,3 +3077,4 @@ function setupEventListeners() {
     renderFilterOptions();
 }
 }
+
