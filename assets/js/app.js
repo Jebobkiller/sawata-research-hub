@@ -41,17 +41,28 @@ const supabaseConfig = {
     anonKey: "sb_publishable_gEAJO_Ft4tqI4D_BXnslzA_NC1oiLpb",  // Your Supabase anon/public key
     bucketName: "research-papers",         // Storage bucket name
     userDataBucket: "user-credentials",    // User credentials storage bucket
-    maxFileSize: 25 * 1024 * 1024          // 25MB max file size
+    maxFileSize: 25 * 1024 * 1024,          // 25MB max file size
+    forceLocalMode: false                    // Set to true to skip Supabase entirely (for debugging)
 };
 
 // Initialize Supabase client
 let supabaseClient = null;
 
 function initializeSupabase() {
+    // Check if we should skip Supabase (for debugging)
+    if (supabaseConfig.forceLocalMode) {
+        console.log('Supabase disabled via forceLocalMode flag');
+        return false;
+    }
+    
     if (supabaseConfig.url !== "YOUR_SUPABASE_PROJECT_URL" && 
         supabaseConfig.anonKey !== "YOUR_SUPABASE_ANON_KEY") {
         try {
             supabaseClient = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+            
+            // Test connection immediately
+            testSupabaseConnection();
+            
             return true;
         } catch (error) {
             console.error('Failed to initialize Supabase:', error);
@@ -59,6 +70,28 @@ function initializeSupabase() {
         }
     }
     return false;
+}
+
+// Test Supabase connection on startup
+async function testSupabaseConnection() {
+    if (!supabaseClient) return;
+    
+    try {
+        // Try a simple request to test connectivity
+        const { data, error } = await supabaseClient
+            .storage
+            .from('research-papers')
+            .list('', { limit: 1 });
+        
+        if (error) {
+            console.error('Supabase connection test failed:', error.message);
+            console.error('Error details:', error);
+        } else {
+            console.log('Supabase connection successful! Storage buckets accessible.');
+        }
+    } catch (err) {
+        console.error('Supabase connection error:', err.message);
+    }
 }
 
 const supabaseConfigured = initializeSupabase();
@@ -101,13 +134,19 @@ function initializeApp() {
         // Initialize with Supabase
         document.getElementById('supabase-loading').style.display = 'flex';
         
-        // Add a timeout - if Supabase doesn't respond in 10 seconds, fallback to local mode
+        // Log startup info
+        console.log('=== SAWATA RESEARCH HUB STARTUP ===');
+        console.log('Supabase URL:', supabaseConfig.url);
+        console.log('Supabase Configured:', supabaseConfigured);
+        console.log('Supabase Client:', supabaseClient ? 'Initialized' : 'Not initialized');
+        
+        // Add a timeout - if Supabase doesn't respond in 5 seconds, fallback to local mode
         const supabaseTimeout = setTimeout(() => {
-            console.warn('Supabase loading timed out, falling back to local mode');
+            console.warn('Supabase loading timed out after 5 seconds, falling back to local mode');
             hideSupabaseLoading();
             initializeWithLocalData();
             showNotification('Cloud Loading Timeout', 'Using local data instead. Check your internet connection.', 'warning');
-        }, 10000); // 10 second timeout
+        }, 5000); // 5 second timeout - reduced from 10 seconds
         
         // Load papers from Supabase
         loadPapersFromSupabase().then(() => {
@@ -454,9 +493,9 @@ async function loadPapersFromSupabase() {
                 sortBy: { column: 'created_at', order: 'desc' }
             });
         
-        // Add timeout of 8 seconds for the request
+        // Add timeout of 5 seconds for the request (reduced from 8)
         const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Request timeout')), 8000)
+            setTimeout(() => reject(new Error('Request timeout')), 5000)
         );
         
         const { data: files, error: listError } = await Promise.race([filesPromise, timeoutPromise]);
@@ -623,13 +662,22 @@ function parseFilenameMetadata(filename) {
 }
 
 function finalizeInitialization() {
-    document.getElementById('supabase-loading').style.display = 'none';
+    // CRITICAL: Always hide the loading screen, no matter what
+    hideSupabaseLoading();
     
     // Initialize paper stats from Supabase (async)
     initializePaperStats().then(() => {
         // Save data to localStorage
         localStorage.setItem('researchPapers', JSON.stringify(researchPapers));
         
+        renderPapersGrid();
+        updateStatistics();
+        setupEventListeners();
+        renderCharts();
+        loadTopPapers();
+    }).catch((error) => {
+        console.warn('Error initializing paper stats:', error);
+        // Still render with local data
         renderPapersGrid();
         updateStatistics();
         setupEventListeners();
